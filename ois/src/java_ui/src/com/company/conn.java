@@ -1,6 +1,7 @@
 package com.company;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.*;
 import java.sql.*;
 import java.io.*;
@@ -65,6 +66,8 @@ public class conn extends JFrame
                     connection = DriverManager.getConnection(url, tf_login.getText(), pf_pass.getText());
 
                     pw.println("Connection is open");
+                    setVisible(false);
+                    openNewWindow();
                 }
                 catch (Exception ex)
                 {
@@ -84,4 +87,118 @@ public class conn extends JFrame
         setSize(600,400);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
     }
-}
+    private void openNewWindow() throws SQLException {
+        JFrame resultFrame = new JFrame("Результаты запроса");
+        resultFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        String query = "SELECT id_rieltor, family FROM rieltors"; // Замените "rieltors" на имя вашей таблицы
+        Statement statement = connection.createStatement();
+        ResultSet resultSet = statement.executeQuery(query);
+
+        JPanel resultPanel = new JPanel(new GridLayout(0, 2)); // Используем GridLayout для отображения данных в виде таблицы
+
+        // Добавление заголовков столбцов в панель
+        ResultSetMetaData metaData = resultSet.getMetaData();
+        int columnCount = metaData.getColumnCount();
+        for (int i = 1; i <= columnCount; i++) {
+            String columnName = metaData.getColumnName(i);
+            resultPanel.add(new JLabel(columnName));
+        }
+
+        // Добавление данных в панель
+        while (resultSet.next()) {
+            for (int i = 1; i <= columnCount; i++) {
+                Object value = resultSet.getObject(i);
+                resultPanel.add(new JLabel(value.toString()));
+            }
+        }
+
+        resultSet.close();
+        statement.close();
+
+        // Добавление строки ввода
+        JTextField inputField = new JTextField();
+        resultPanel.add(inputField);
+
+        // Добавление кнопки "Выбрать"
+        JButton selectButton = new JButton("Выбрать");
+        JLabel greetingLabel = new JLabel("");
+        selectButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String selectedValue = inputField.getText();
+                // Действия при выборе значения
+                try {
+                    int selectedId = Integer.parseInt(selectedValue);
+                    String query = "SELECT family FROM rieltors WHERE id_rieltor = " + selectedId;
+                    Statement statement = connection.createStatement();
+                    ResultSet resultSet = statement.executeQuery(query);
+
+                    if (resultSet.next()) {
+                        String family = resultSet.getString("family");
+                        greetingLabel.setText("Привет, " + family);
+                        openHouseWindow(selectedId);
+                    } else {
+                        JOptionPane.showMessageDialog(resultFrame,"Не найдено риелтора с указанным ID");
+                    }
+
+                    resultSet.close();
+                    statement.close();
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(resultFrame, "Некорректный номер");
+                } catch (SQLException ex) {
+                    JOptionPane.showMessageDialog(resultFrame, "Ошибка при выполнении запроса");
+                }
+
+                // Очистка данных
+                inputField.setText("");
+
+            }
+        });
+        resultPanel.add(selectButton);
+        resultPanel.add(greetingLabel);
+        resultFrame.getContentPane().add(resultPanel); // Добавление панели с результатами в окно
+        resultFrame.pack(); // Установка оптимального размера окна на основе содержимого
+        resultFrame.setVisible(true);
+
+    }
+
+    private void openHouseWindow(int selectedId) throws SQLException {
+        JFrame houseFrame = new JFrame("Дома");
+        try {
+            String query = "SELECT id_hata, id_client, address FROM hata WHERE id_rieltor = " + selectedId;
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(query);
+
+            // Создание панели для отображения таблицы
+            JPanel housePanel = new JPanel(new GridLayout(0, 3));
+            ResultSetMetaData metaData = resultSet.getMetaData();
+            int columnCount = metaData.getColumnCount();
+
+            // Добавление заголовков столбцов в панель
+            for (int i = 1; i <= columnCount; i++) {
+                String columnName = metaData.getColumnName(i);
+                housePanel.add(new JLabel(columnName));
+            }
+
+            // Добавление данных в панель
+            while (resultSet.next()) {
+                for (int i = 1; i <= columnCount; i++) {
+                    Object value = resultSet.getObject(i);
+                    housePanel.add(new JLabel(value.toString()));
+                }
+            }
+
+            resultSet.close();
+            statement.close();
+
+            houseFrame.getContentPane().add(housePanel); // Добавление панели с результатами в окно
+            houseFrame.pack(); // Установка оптимального размера окна на основе содержимого
+            houseFrame.setVisible(true);
+        }
+        catch(SQLException e){
+                JOptionPane.showMessageDialog(null, "Ошибка при выполнении запроса: " + e.getMessage(), "Ошибка", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
+
+    }
