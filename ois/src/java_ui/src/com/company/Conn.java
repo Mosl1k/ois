@@ -12,11 +12,11 @@ import javax.swing.table.DefaultTableModel;
 
 public class Conn extends JFrame {
     static PrintWriter pw = new PrintWriter(System.out, true);
-    static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+//    static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
     public static Connection connection = null;
 
-    private JPasswordField pf_pass;
-    private JLabel lb_login;
+//    private JPasswordField pf_pass;
+//    private JLabel lb_login;
     String url = "jdbc:mysql://localhost:3306/ois_db";
 
     public Conn() {
@@ -142,9 +142,72 @@ public class Conn extends JFrame {
             }
         });
 
+        JButton addClientButton = new JButton("Добавить клиента");
+        addClientButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                JFrame addClientFrame = new JFrame("Добавить клиента");
+                JPanel addClientPanel = new JPanel(new GridLayout(4, 2));
+
+                addClientPanel.add(new JLabel("Фамилия:"));
+                JTextField surnameField = new JTextField();
+                addClientPanel.add(surnameField);
+
+                addClientPanel.add(new JLabel("Имя:"));
+                JTextField nameField = new JTextField();
+                addClientPanel.add(nameField);
+
+                addClientPanel.add(new JLabel("Прописка:"));
+                JTextField propiskaField = new JTextField();
+                addClientPanel.add(propiskaField);
+
+                addClientPanel.add(new JLabel("Паспорт:"));
+                JTextField pasportField = new JTextField();
+                addClientPanel.add(pasportField);
+
+                JButton saveClientButton = new JButton("Сохранить");
+                saveClientButton.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                        try {
+                            String surname = surnameField.getText();
+                            String name = nameField.getText();
+                            String propiska = propiskaField.getText();
+                            String pasport = pasportField.getText();
+
+                            String insertQuery = "INSERT INTO client (surname, name, propiska, pasport) VALUES (?, ?, ?, ?)";
+                            PreparedStatement insertStatement = connection.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS);
+                            insertStatement.setString(1, surname);
+                            insertStatement.setString(2, name);
+                            insertStatement.setString(3, propiska);
+                            insertStatement.setString(4, pasport);
+                            insertStatement.executeUpdate();
+
+                            ResultSet generatedKeys = insertStatement.getGeneratedKeys();
+                            int clientId = -1;
+                            if (generatedKeys.next()) {
+                                clientId = generatedKeys.getInt(1);
+                            }
+
+                            JOptionPane.showMessageDialog(addClientFrame, "Клиент добавлен успешно\nclient_id: " + clientId + "\nФамилия: " + surname + "\nИмя: " + name);
+
+                            insertStatement.close();
+                        } catch (SQLException ex) {
+                            JOptionPane.showMessageDialog(addClientFrame, "Ошибка при выполнении запроса: " + ex.getMessage(), "Ошибка", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                });
+
+                addClientPanel.add(saveClientButton);
+
+                addClientFrame.getContentPane().add(addClientPanel);
+                addClientFrame.pack();
+                addClientFrame.setVisible(true);
+            }
+        });
+
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(selectButton);
         buttonPanel.add(greetingLabel);
+        buttonPanel.add(addClientButton);
         resultPanel.add(buttonPanel, BorderLayout.NORTH);
 
         resultFrame.getContentPane().add(resultPanel);
@@ -152,7 +215,7 @@ public class Conn extends JFrame {
         resultFrame.setVisible(true);
     }
 
-    private void openHouseWindow(int selectedId) throws SQLException {
+    private void openHouseWindow(final int selectedId) throws SQLException {
         JFrame houseFrame = new JFrame("Дома");
         try {
             String query = "SELECT id_hata, id_client, id_rieltor, address, total_area, houseroom, rooms, floor, cold_water, hot_water, balcony, type FROM hata WHERE id_rieltor = " + selectedId;
@@ -188,19 +251,16 @@ public class Conn extends JFrame {
             JButton addButton = new JButton("Добавить");
             addButton.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
-                    JFrame addHouseFrame = new JFrame("Добавить запись в таблицу hata");
+                    JFrame addHouseFrame = new JFrame("Добавить запись в Дома");
                     JPanel addHousePanel = new JPanel(new GridLayout(13, 2));
-
-                    addHousePanel.add(new JLabel("id_hata:"));
-                    JTextField idHataField = new JTextField();
-                    addHousePanel.add(idHataField);
 
                     addHousePanel.add(new JLabel("id_client:"));
                     JTextField idClientField = new JTextField();
                     addHousePanel.add(idClientField);
 
                     addHousePanel.add(new JLabel("id_rieltor:"));
-                    JTextField idRieltorField = new JTextField();
+//                    JTextField idRieltorField = new JTextField();
+                    JTextField idRieltorField = new JTextField(String.valueOf(selectedId));
                     addHousePanel.add(idRieltorField);
 
                     addHousePanel.add(new JLabel("address:"));
@@ -243,7 +303,7 @@ public class Conn extends JFrame {
                     saveButton.addActionListener(new ActionListener() {
                         public void actionPerformed(ActionEvent e) {
                             try {
-                                int idHata = Integer.parseInt(idHataField.getText());
+//                                int idHata = Integer.parseInt(idHataField.getText());
                                 int idClient = Integer.parseInt(idClientField.getText());
                                 int idRieltor = Integer.parseInt(idRieltorField.getText());
                                 String address = addressField.getText();
@@ -256,32 +316,34 @@ public class Conn extends JFrame {
                                 boolean balcony = Boolean.parseBoolean(balconyField.getText());
                                 String type = typeField.getText();
 
-                                String insertQuery = "INSERT INTO hata (id_hata, id_client, id_rieltor, address, total_area, houseroom, rooms, floor, cold_water, hot_water, balcony, type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                                String insertQuery = "INSERT INTO hata (id_client, id_rieltor, address, total_area, houseroom, rooms, floor, cold_water, hot_water, balcony, type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                                 PreparedStatement insertStatement = connection.prepareStatement(insertQuery);
-                                insertStatement.setInt(1, idHata);
-                                insertStatement.setInt(2, idClient);
-                                insertStatement.setInt(3, idRieltor);
-                                insertStatement.setString(4, address);
-                                insertStatement.setInt(5, totalArea);
-                                insertStatement.setInt(6, houseroom);
-                                insertStatement.setInt(7, rooms);
-                                insertStatement.setInt(8, floor);
-                                insertStatement.setBoolean(9, coldWater);
-                                insertStatement.setBoolean(10, hotWater);
-                                insertStatement.setBoolean(11, balcony);
-                                insertStatement.setString(12, type);
+//                                insertStatement.setInt(1, idHata);
+                                insertStatement.setInt(1, idClient);
+                                insertStatement.setInt(2, idRieltor);
+                                insertStatement.setString(3, address);
+                                insertStatement.setInt(4, totalArea);
+                                insertStatement.setInt(5, houseroom);
+                                insertStatement.setInt(6, rooms);
+                                insertStatement.setInt(7, floor);
+                                insertStatement.setBoolean(8, coldWater);
+                                insertStatement.setBoolean(9, hotWater);
+                                insertStatement.setBoolean(10, balcony);
+                                insertStatement.setString(11, type);
                                 insertStatement.executeUpdate();
 
                                 JOptionPane.showMessageDialog(addHouseFrame, "Запись добавлена успешно");
 
                                 insertStatement.close();
                             } catch (NumberFormatException ex) {
-                                JOptionPane.showMessageDialog(addHouseFrame, "Ошибка: Некорректный формат данных");
+                                JOptionPane.showMessageDialog(addHouseFrame, "Некорректные данные");
                             } catch (SQLException ex) {
                                 JOptionPane.showMessageDialog(addHouseFrame, "Ошибка при выполнении запроса: " + ex.getMessage(), "Ошибка", JOptionPane.ERROR_MESSAGE);
                             }
                         }
                     });
+
+
 
                     addHousePanel.add(saveButton);
 
@@ -291,22 +353,52 @@ public class Conn extends JFrame {
                 }
             });
 
-            JPanel addButtonPanel = new JPanel();
-            addButtonPanel.add(addButton);
-            houseFrame.getContentPane().add(addButtonPanel, BorderLayout.SOUTH);
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(houseFrame, "Ошибка при выполнении запроса: " + ex.getMessage(), "Ошибка", JOptionPane.ERROR_MESSAGE);
+
+
+            houseFrame.getContentPane().add(addButton, BorderLayout.NORTH);
+
+            JButton deleteButton = new JButton("Удалить");
+            deleteButton.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    int selectedRow = table.getSelectedRow();
+                    if (selectedRow != -1) {
+                        int idHata = (int) table.getValueAt(selectedRow, 0);
+                        int confirm = JOptionPane.showConfirmDialog(houseFrame, "Вы уверены, что хотите удалить выбранный дом?");
+                        if (confirm == JOptionPane.YES_OPTION) {
+                            try {
+                                String deleteQuery = "DELETE FROM hata WHERE id_hata = ?";
+                                PreparedStatement deleteStatement = connection.prepareStatement(deleteQuery);
+                                deleteStatement.setInt(1, idHata);
+                                deleteStatement.executeUpdate();
+
+                                JOptionPane.showMessageDialog(houseFrame, "Дом удален успешно");
+
+                                deleteStatement.close();
+                            } catch (SQLException ex) {
+                                JOptionPane.showMessageDialog(houseFrame, "Ошибка при выполнении запроса: " + ex.getMessage(), "Ошибка", JOptionPane.ERROR_MESSAGE);
+                            }
+                        }
+                    } else {
+                        JOptionPane.showMessageDialog(houseFrame, "Выберите дом для удаления");
+                    }
+                }
+            });
+
+//            .add(deleteButton);
+            houseFrame.getContentPane().add(deleteButton, BorderLayout.SOUTH);
+            houseFrame.revalidate();
+
+        } catch (Exception e) {
+            pw.println("ERROR: Cannot open Houses window");
         }
+
+
     }
 
-    public static void main(String[] args) {
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (UnsupportedLookAndFeelException | ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-            e.printStackTrace();
-        }
 
-        Conn frame = new Conn();
-        frame.setVisible(true);
+
+    public static void main(String[] args) {
+        Conn jf = new Conn();
+        jf.setVisible(true);
     }
 }
