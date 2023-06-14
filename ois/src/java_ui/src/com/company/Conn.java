@@ -43,23 +43,21 @@ public class Conn extends JFrame {
         JButton bt_conn = new JButton("Вход");
         bt_conn.setLocation(100, 100);
         bt_conn.setSize(100, 20);
-        bt_conn.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    Class.forName("com.mysql.cj.jdbc.Driver");
-                    pw.println("Driver was installed");
-                } catch (Exception ex) {
-                    pw.println("ERROR: Driver wasn't installed");
-                }
+        bt_conn.addActionListener(e -> {
+            try {
+                Class.forName("com.mysql.cj.jdbc.Driver");
+                pw.println("Driver was installed");
+            } catch (Exception ex) {
+                pw.println("ERROR: Driver wasn't installed");
+            }
 
-                try {
-                    connection = DriverManager.getConnection(url, tf_login.getText(), pf_pass.getText());
-                    pw.println("Connection is open");
-                    setVisible(false);
-                    openNewWindow();
-                } catch (Exception ex) {
-                    pw.println("ERROR: Cannot open connection");
-                }
+            try {
+                connection = DriverManager.getConnection(url, tf_login.getText(), pf_pass.getText());
+                pw.println("Connection is open");
+                setVisible(false);
+                openNewWindow();
+            } catch (Exception ex) {
+                pw.println("ERROR: Cannot open connection");
             }
         });
 
@@ -315,7 +313,6 @@ public class Conn extends JFrame {
                                 boolean hotWater = Boolean.parseBoolean(hotWaterField.getText());
                                 boolean balcony = Boolean.parseBoolean(balconyField.getText());
                                 String type = typeField.getText();
-
                                 String insertQuery = "INSERT INTO hata (id_client, id_rieltor, address, total_area, houseroom, rooms, floor, cold_water, hot_water, balcony, type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                                 PreparedStatement insertStatement = connection.prepareStatement(insertQuery);
 //                                insertStatement.setInt(1, idHata);
@@ -331,9 +328,7 @@ public class Conn extends JFrame {
                                 insertStatement.setBoolean(10, balcony);
                                 insertStatement.setString(11, type);
                                 insertStatement.executeUpdate();
-
                                 JOptionPane.showMessageDialog(addHouseFrame, "Запись добавлена успешно");
-
                                 insertStatement.close();
                             } catch (NumberFormatException ex) {
                                 JOptionPane.showMessageDialog(addHouseFrame, "Некорректные данные");
@@ -343,10 +338,7 @@ public class Conn extends JFrame {
                         }
                     });
 
-
-
                     addHousePanel.add(saveButton);
-
                     addHouseFrame.getContentPane().add(addHousePanel);
                     addHouseFrame.pack();
                     addHouseFrame.setVisible(true);
@@ -354,9 +346,7 @@ public class Conn extends JFrame {
             });
 
 
-
             houseFrame.getContentPane().add(addButton, BorderLayout.NORTH);
-
             JButton deleteButton = new JButton("Удалить");
             deleteButton.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
@@ -370,9 +360,7 @@ public class Conn extends JFrame {
                                 PreparedStatement deleteStatement = connection.prepareStatement(deleteQuery);
                                 deleteStatement.setInt(1, idHata);
                                 deleteStatement.executeUpdate();
-
                                 JOptionPane.showMessageDialog(houseFrame, "Дом удален успешно");
-
                                 deleteStatement.close();
                             } catch (SQLException ex) {
                                 JOptionPane.showMessageDialog(houseFrame, "Ошибка при выполнении запроса: " + ex.getMessage(), "Ошибка", JOptionPane.ERROR_MESSAGE);
@@ -391,11 +379,7 @@ public class Conn extends JFrame {
         } catch (Exception e) {
             pw.println("ERROR: Cannot open Houses window");
         }
-
-
     }
-
-
 
     public static void main(String[] args) {
         Conn jf = new Conn();
